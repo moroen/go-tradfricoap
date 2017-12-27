@@ -3,7 +3,11 @@ package tradfricoap
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"log"
 
+	"github.com/buger/jsonparser"
+	"github.com/moroen/canopus"
 	"github.com/tucnak/store"
 )
 
@@ -46,5 +50,45 @@ func LoadConfig() (err error) {
 
 func SaveConfig(conf GatewayConfig) (err error) {
 	err = store.Save("gateway.json", &conf)
+	if err == nil {
+		log.Println("Saved new config: ", conf.Describe())
+	}
 	return err
+}
+
+func CreateIdent(gateway, key, ident string) {
+	payload := fmt.Sprintf("{\"%s\":\"%s\"}", attr_Ident, ident)
+	URI := uri_Ident
+
+	conn, err := canopus.DialDTLS(fmt.Sprintf("%s:%s", gateway, DefaultPort), "Client_identity", key)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	req := canopus.NewRequest(canopus.MessageConfirmable, canopus.Post)
+	req.SetRequestURI(URI)
+	req.SetStringPayload(payload)
+
+	response, err := conn.Send(req)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	if response.GetMessage().GetCode() == 65 {
+		result := response.GetMessage().GetPayload().GetBytes()
+		psk, err := jsonparser.GetString(result, "9091")
+		if err != nil {
+			panic(err.Error())
+		}
+
+		conf := GatewayConfig{Gateway: fmt.Sprintf("%s:%s", gateway, DefaultPort), Identity: ident, Passkey: psk}
+		SaveConfig(conf)
+		SetConfig(conf)
+
+	} else {
+		log.Printf("Unable to get PSK for ident '%s'. Ident already in use?", ident)
+	}
+	// fmt.Println("Code: ", resp.GetMessage().GetCode())
+	// response := resp.GetMessage().GetPayload()
+	// fmt.Println("Response: ", response.String())
 }

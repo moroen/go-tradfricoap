@@ -18,10 +18,10 @@ func trimJSON(json string) string {
 	return json
 }
 
-func GetDevices() {
-	payload, err := GetRequest(attr_Devices)
+func GetDevices() ([]TradfriLight, error) {
+	payload, err := GetRequest(uri_Devices)
 	if err != nil {
-		panic(err.Error())
+		return nil, err
 	}
 
 	msg := payload.String()
@@ -32,9 +32,9 @@ func GetDevices() {
 	lights := []TradfriLight{}
 
 	for i := range result {
-		device, err := GetRequest(fmt.Sprintf("%s/%s", attr_Devices, result[i]))
+		device, err := GetRequest(fmt.Sprintf("%s/%s", uri_Devices, result[i]))
 		if err != nil {
-			panic(err.Error())
+			return nil, err
 		}
 
 		var aLight TradfriLight
@@ -80,7 +80,10 @@ func GetDevices() {
 		return lights[i].Id < lights[j].Id
 	})
 
-	for i := range lights {
-		fmt.Println(lights[i].Describe())
-	}
+	/*
+		for i := range lights {
+			fmt.Println(lights[i].Describe())
+		}
+	*/
+	return lights, err
 }

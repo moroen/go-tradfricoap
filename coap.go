@@ -43,8 +43,8 @@ func PutRequest(URI, payload string) (msg canopus.MessagePayload, err error) {
 	if err != nil {
 		panic(err.Error())
 	}
-
 	response := resp.GetMessage().GetPayload()
+	println("Response: ", response.String())
 	return response, err
 }
 
