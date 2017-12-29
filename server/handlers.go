@@ -13,16 +13,22 @@ import (
 
 func Index(w http.ResponseWriter, r *http.Request) {
 	// params := mux.Vars(r)
-	fmt.Fprintln(w, "Welcome")
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+
+	fmt.Fprintln(w, "Welcome!")
 }
 
 func GetLights(w http.ResponseWriter, r *http.Request) {
-	log.Println("Getting lights")
 	lights, _, err := coap.GetDevices()
 	if err != nil {
 		panic(err.Error())
 	}
 	answer := returnMessageDevices{Action: "getLights", Status: "Ok", Result: lights}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(answer)
 }
 
@@ -30,6 +36,8 @@ func GetLight(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	log.Println("Getting light: ", params["id"])
 	if device, err := coap.GetLight(params["id"]); err == nil {
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(device)
 	}
 }
@@ -56,6 +64,8 @@ func SetDimmer(w http.ResponseWriter, r *http.Request) {
 	} else {
 		log.Println("Failed to set level")
 		errMsg := returnMessageSimple{Action: "setLevel", Status: "error", Result: err.Error()}
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(errMsg)
 	}
 }
