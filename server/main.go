@@ -6,15 +6,16 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 	coap "github.com/moroen/go-tradfricoap"
 )
 
-type returnMessageSimple struct {
-	Action string
-	Status string
-	Result string
+type Todo struct {
+	Name      string    `json:"name"`
+	Completed bool      `json:"completed"`
+	Due       time.Time `json:"due"`
 }
 
 const port = "8085"
@@ -51,11 +52,12 @@ func main() {
 
 func GetLights(w http.ResponseWriter, r *http.Request) {
 	log.Println("Getting lights")
-	lights, err := coap.GetDevices()
+	lights, _, err := coap.GetDevices()
 	if err != nil {
 		panic(err.Error())
 	}
-	json.NewEncoder(w).Encode(lights)
+	answer := returnMessageDevices{Action: "getLights", Status: "Ok", Result: lights}
+	json.NewEncoder(w).Encode(answer)
 }
 
 func GetLight(w http.ResponseWriter, r *http.Request) {
