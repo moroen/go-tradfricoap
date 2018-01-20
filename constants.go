@@ -14,6 +14,8 @@ const attr_id = "9003"
 const attr_DeviceInfo = "3"
 const attr_DeviceInfo_Model = "1"
 
+const uri_Groups = "/15004"
+
 // Lights
 const attr_Light_control = "3311"
 const attr_light_state = "5850"

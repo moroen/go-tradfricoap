@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 
 	"github.com/buger/jsonparser"
@@ -25,7 +26,7 @@ func (l TradfriLight) Describe() string {
 	return fmt.Sprintf("%d: %s (%s) - %s (%d)", l.Id, l.Name, l.Model, l.State, l.Dimmer)
 }
 
-func GetLight(id string) (TradfriLight, error) {
+func GetLight(id int64) (TradfriLight, error) {
 	var aLight TradfriLight
 
 	device, err := GetRequest(fmt.Sprintf("%s/%s", uri_Devices, id))
@@ -79,25 +80,51 @@ func GetLight(id string) (TradfriLight, error) {
 	return aLight, err
 }
 
-func SetState(id string, state int) (msg canopus.MessagePayload, err error) {
+func GetDevices() (TradfriLights, TradfriGroups, error) {
+	payload, err := GetRequest(uri_Devices)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	msg := payload.GetBytes()
+
+	lights := []TradfriLight{}
+
+	jsonparser.ArrayEach(msg, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		if res, err := jsonparser.GetInt(value); err == nil {
+			aLight, err := GetLight(res)
+			if err == nil {
+				lights = append(lights, aLight)
+			}
+		}
+	})
+
+	sort.Slice(lights, func(i, j int) bool {
+		return lights[i].Id < lights[j].Id
+	})
+
+	return lights, nil, err
+}
+
+func SetState(id int64, state int) (msg canopus.MessagePayload, err error) {
 	uri := fmt.Sprintf("%s/%s", uri_Devices, id)
 	payload := fmt.Sprintf("{ \"%s\": [{ \"%s\": %d }] }", attr_Light_control, attr_light_state, state)
 	return PutRequest(uri, payload)
 }
 
-func SetLevel(id string, level int) (msg canopus.MessagePayload, err error) {
+func SetLevel(id int64, level int) (msg canopus.MessagePayload, err error) {
 	uri := fmt.Sprintf("%s/%s", uri_Devices, id)
 	payload := fmt.Sprintf("{ \"%s\": [{ \"%s\": %d }] }", attr_Light_control, attr_light_dimmer, level)
 	return PutRequest(uri, payload)
 }
 
-func SetHex(id string, hex string) (msg canopus.MessagePayload, err error) {
-	uri := fmt.Sprintf("%s/%s", uri_Devices, id)
+func SetHex(id int64, hex string) (msg canopus.MessagePayload, err error) {
+	uri := fmt.Sprintf("%s/%d", uri_Devices, id)
 	payload := fmt.Sprintf("{ \"%s\": [{ \"%s\": \"%s\" }] }", attr_Light_control, attr_light_hex, hex)
 	return PutRequest(uri, payload)
 }
 
-func SetHexForLevel(id string, level int) error {
+func SetHexForLevel(id int64, level int) error {
 	device, err := GetLight(id)
 	if err != nil {
 		log.Fatal(err.Error())

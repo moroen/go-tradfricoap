@@ -1,11 +1,9 @@
 package tradfricoap
 
-import (
-	"sort"
-	// "log"
-
+import ( // "log"
 	// "os"
-	// "strconv"
+	"fmt"
+	"strconv"
 	"strings"
 	// "github.com/moroen/canopus"
 	// "github.com/urfave/cli"
@@ -17,29 +15,9 @@ func trimJSON(json string) string {
 	return json
 }
 
-func GetDevices() (TradfriLights, TradfriGroups, error) {
-	payload, err := GetRequest(uri_Devices)
-	if err != nil {
-		return nil, nil, err
+func ValidateDeviceID(id string) error {
+	if _, err := strconv.Atoi(id); err != nil {
+		return fmt.Errorf("%s doesn't appear to be a valid tradfri device", id)
 	}
-
-	msg := payload.String()
-	msg = strings.Trim(msg, "[")
-	msg = strings.Trim(msg, "]")
-	result := strings.Split(msg, ",")
-
-	lights := []TradfriLight{}
-
-	for i := range result {
-		aLight, err := GetLight(result[i])
-		if err == nil {
-			lights = append(lights, aLight)
-		}
-	}
-
-	sort.Slice(lights, func(i, j int) bool {
-		return lights[i].Id < lights[j].Id
-	})
-
-	return lights, nil, err
+	return nil
 }
