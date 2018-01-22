@@ -29,7 +29,7 @@ func (l TradfriLight) Describe() string {
 func GetLight(id int64) (TradfriLight, error) {
 	var aLight TradfriLight
 
-	device, err := GetRequest(fmt.Sprintf("%s/%s", uri_Devices, id))
+	device, err := GetRequest(fmt.Sprintf("%s/%d", uri_Devices, id))
 	if err != nil {
 		return aLight, err
 	}
@@ -107,13 +107,13 @@ func GetDevices() (TradfriLights, TradfriGroups, error) {
 }
 
 func SetState(id int64, state int) (msg canopus.MessagePayload, err error) {
-	uri := fmt.Sprintf("%s/%s", uri_Devices, id)
+	uri := fmt.Sprintf("%s/%d", uri_Devices, id)
 	payload := fmt.Sprintf("{ \"%s\": [{ \"%s\": %d }] }", attr_Light_control, attr_light_state, state)
 	return PutRequest(uri, payload)
 }
 
 func SetLevel(id int64, level int) (msg canopus.MessagePayload, err error) {
-	uri := fmt.Sprintf("%s/%s", uri_Devices, id)
+	uri := fmt.Sprintf("%s/%d", uri_Devices, id)
 	payload := fmt.Sprintf("{ \"%s\": [{ \"%s\": %d }] }", attr_Light_control, attr_light_dimmer, level)
 	return PutRequest(uri, payload)
 }

@@ -21,3 +21,11 @@ func ValidateDeviceID(id string) error {
 	}
 	return nil
 }
+
+func ValidateOnOff(arg string) error {
+	if strings.ToLower(arg) == "on" || strings.ToLower(arg) == "off" || strings.ToLower(arg) == "1" || strings.ToLower(arg) == "0" {
+		return nil
+	} else {
+		return fmt.Errorf("%s isn't an allowed setting, use 'on', 'off', '1' or '0'", arg)
+	}
+}
