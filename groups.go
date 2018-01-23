@@ -2,6 +2,9 @@ package tradfricoap
 
 import (
 	"fmt"
+	"sort"
+
+	"github.com/moroen/canopus"
 
 	"github.com/buger/jsonparser"
 )
@@ -12,18 +15,32 @@ type TradfriGroup struct {
 }
 
 func (g TradfriGroup) Describe() string {
-	return fmt.Sprint(g)
+	return fmt.Sprintf("%d: %s", g.Id, g.Name)
 }
 
 type TradfriGroups []TradfriGroup
 
-func GetGroup(id string) (TradfriGroup, error) {
+func GetGroup(id int64) (TradfriGroup, error) {
 	var aGroup TradfriGroup
+	msg, err := GetRequest(fmt.Sprintf("%s/%d", uri_Groups, id))
+	if err != nil {
+		panic(err.Error())
+	}
+	fmt.Println(msg.String())
+
+	currentGroup := msg.GetBytes()
+	aGroup.Id = id
+
+	if value, err := jsonparser.GetString(currentGroup, attr_group_name); err == nil {
+		aGroup.Name = value
+	}
 
 	return aGroup, nil
 }
 
 func GetGroups() (TradfriGroups, error) {
+	groups := []TradfriGroup{}
+
 	payload, err := GetRequest(uri_Groups)
 	if err != nil {
 		return nil, err
@@ -31,28 +48,25 @@ func GetGroups() (TradfriGroups, error) {
 
 	msg := payload.GetBytes()
 
-	//msg = strings.Trim(msg, "[")
-	//msg = strings.Trim(msg, "]")
-	//result := strings.Split(msg, ",")
-
-	groups := []TradfriGroup{}
-
 	jsonparser.ArrayEach(msg, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		if res, err := jsonparser.GetInt(value); err == nil {
-			fmt.Println(res)
+			aGroup, err := GetGroup(res)
+			if err == nil {
+				groups = append(groups, aGroup)
+			}
 		}
 	})
 
-	// for i := range result {
-	// 	aGroup, err := GetGroup(result[i])
-	// 	if err == nil {
-	// 		groups = append(groups, aGroup)
-	// 	}
-	// }
-
-	// sort.Slice(groups, func(i, j int) bool {
-	// 	return groups[i].Id < groups[j].Id
-	// })
+	sort.Slice(groups, func(i, j int) bool {
+		return groups[i].Id < groups[j].Id
+	})
 
 	return groups, err
+}
+
+func GroupSetState(id int64, state int) (canopus.MessagePayload, error) {
+	uri := fmt.Sprintf("%s/%d", uri_Groups, id)
+	payload := fmt.Sprintf("{\"%s\":%d}", attr_light_state, state)
+	// fmt.Println(uri, payload)
+	return PutRequest(uri, payload)
 }
