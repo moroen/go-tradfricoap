@@ -80,10 +80,11 @@ func GetLight(id int64) (TradfriLight, error) {
 	return aLight, err
 }
 
-func GetDevices() (TradfriLights, TradfriGroups, error) {
+func GetDevices() (TradfriLights, error) {
 	payload, err := GetRequest(uri_Devices)
 	if err != nil {
-		return nil, nil, err
+		// fmt.Println(err.Error())
+		return nil, err
 	}
 
 	msg := payload.GetBytes()
@@ -103,7 +104,7 @@ func GetDevices() (TradfriLights, TradfriGroups, error) {
 		return lights[i].Id < lights[j].Id
 	})
 
-	return lights, nil, err
+	return lights, err
 }
 
 func SetState(id int64, state int) (msg canopus.MessagePayload, err error) {
