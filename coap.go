@@ -2,7 +2,6 @@ package tradfricoap
 
 import (
 	"errors"
-	"fmt"
 
 	// "os"
 	"time"
@@ -17,8 +16,8 @@ type CoapResult struct {
 	err error
 }
 
-var ErrorTimeout = errors.New("COAP Connection timeout")
-var ErrorBadIdent = errors.New("COAP Bad credentials")
+var ErrorTimeout = errors.New("COAP Error: Connection timeout")
+var ErrorBadIdent = errors.New("COAP DTLS Error: Wrong credentials?")
 
 func _getRequest(URI string, c chan CoapResult) {
 
@@ -64,7 +63,7 @@ func _putRequest(URI, payload string, c chan CoapResult) {
 
 	resp, err := conn.Send(req)
 	if err != nil {
-		result.err = err
+		result.err = ErrorBadIdent
 		c <- result
 		return
 	}
@@ -96,6 +95,6 @@ func PutRequest(URI, payload string) (msg canopus.MessagePayload, err error) {
 	case res := <-c:
 		return res.msg, res.err
 	case <-time.After(time.Second * 5):
-		return nil, fmt.Errorf("Timeout for request '%s'", URI)
+		return nil, ErrorTimeout
 	}
 }

@@ -3,12 +3,10 @@ package tradfricoap
 import (
 	"errors"
 	"fmt"
-	"log"
 	"sort"
 	"strings"
 
 	"github.com/buger/jsonparser"
-	"github.com/moroen/canopus"
 )
 
 type TradfriLight struct {
@@ -107,34 +105,48 @@ func GetDevices() (TradfriLights, error) {
 	return lights, err
 }
 
-func SetState(id int64, state int) (msg canopus.MessagePayload, err error) {
+func SetState(id int64, state int) (TradfriLight, error) {
+	device := TradfriLight{}
+
 	uri := fmt.Sprintf("%s/%d", uri_Devices, id)
 	payload := fmt.Sprintf("{ \"%s\": [{ \"%s\": %d }] }", attr_Light_control, attr_light_state, state)
-	return PutRequest(uri, payload)
+	_, err := PutRequest(uri, payload)
+	if err != nil {
+		return device, err
+	}
+	return GetLight(id)
 }
 
-func SetLevel(id int64, level int) (msg canopus.MessagePayload, err error) {
+func SetLevel(id int64, level int) (device TradfriLight, err error) {
 	uri := fmt.Sprintf("%s/%d", uri_Devices, id)
 	payload := fmt.Sprintf("{ \"%s\": [{ \"%s\": %d }] }", attr_Light_control, attr_light_dimmer, level)
-	return PutRequest(uri, payload)
+	_, err = PutRequest(uri, payload)
+	if err != nil {
+		return device, err
+	}
+	return GetLight(id)
 }
 
-func SetHex(id int64, hex string) (msg canopus.MessagePayload, err error) {
+func SetHex(id int64, hex string) (device TradfriLight, err error) {
 	uri := fmt.Sprintf("%s/%d", uri_Devices, id)
 	payload := fmt.Sprintf("{ \"%s\": [{ \"%s\": \"%s\" }] }", attr_Light_control, attr_light_hex, hex)
-	return PutRequest(uri, payload)
+
+	_, err = PutRequest(uri, payload)
+	if err != nil {
+		return device, err
+	}
+	return GetLight(id)
 }
 
-func SetHexForLevel(id int64, level int) error {
-	device, err := GetLight(id)
+func SetHexForLevel(id int64, level int) (device TradfriLight, err error) {
+	device, err = GetLight(id)
 	if err != nil {
-		log.Fatal(err.Error())
+		return device, err
 	}
 
 	if hex, keyExists := device.Colors[level]["Hex"]; keyExists {
-		_, err := SetHex(id, hex)
-		return err
+		return SetHex(id, hex)
 	} else {
-		return errors.New(fmt.Sprintf("Unknown colorlevel %d", level))
+		return device, errors.New(fmt.Sprintf("Unknown colorlevel %d", level))
 	}
 }
