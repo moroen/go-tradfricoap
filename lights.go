@@ -3,9 +3,9 @@ package tradfricoap
 import (
 	"errors"
 	"fmt"
-	"sort"
 	"strings"
 
+	"github.com/bradfitz/slice"
 	"github.com/buger/jsonparser"
 )
 
@@ -98,7 +98,7 @@ func GetDevices() (TradfriLights, error) {
 		}
 	})
 
-	sort.Slice(lights, func(i, j int) bool {
+	slice.Sort(lights, func(i, j int) bool {
 		return lights[i].Id < lights[j].Id
 	})
 

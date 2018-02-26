@@ -2,10 +2,8 @@ package tradfricoap
 
 import (
 	"fmt"
-	"sort"
-
-	"github.com/moroen/canopus"
-
+	// "sort"
+	"github.com/bradfitz/slice"
 	"github.com/buger/jsonparser"
 )
 
@@ -22,11 +20,10 @@ func (g TradfriGroup) Describe() string {
 
 type TradfriGroups []TradfriGroup
 
-func GetGroup(id int64) (TradfriGroup, error) {
-	var aGroup TradfriGroup
+func GetGroup(id int64) (aGroup TradfriGroup, err error) {
 	msg, err := GetRequest(fmt.Sprintf("%s/%d", uri_Groups, id))
 	if err != nil {
-		panic(err.Error())
+		return aGroup, err
 	}
 
 	// fmt.Println(msg.String())
@@ -72,22 +69,30 @@ func GetGroups() (TradfriGroups, error) {
 		}
 	})
 
-	sort.Slice(groups, func(i, j int) bool {
+	slice.Sort(groups, func(i, j int) bool {
 		return groups[i].Id < groups[j].Id
 	})
 
 	return groups, err
 }
 
-func GroupSetState(id int64, state int) (canopus.MessagePayload, error) {
+func GroupSetState(id int64, state int) (group TradfriGroup, err error) {
 	uri := fmt.Sprintf("%s/%d", uri_Groups, id)
 	payload := fmt.Sprintf("{\"%s\":%d}", attr_light_state, state)
 	// fmt.Println(uri, payload)
-	return PutRequest(uri, payload)
+	_, err = PutRequest(uri, payload)
+	if err != nil {
+		return group, err
+	}
+	return GetGroup(id)
 }
 
-func GroupSetLevel(id int64, level int) (msg canopus.MessagePayload, err error) {
+func GroupSetLevel(id int64, level int) (group TradfriGroup, err error) {
 	uri := fmt.Sprintf("%s/%d", uri_Groups, id)
 	payload := fmt.Sprintf("{\"%s\":%d}", attr_light_dimmer, level)
-	return PutRequest(uri, payload)
+	_, err = PutRequest(uri, payload)
+	if err != nil {
+		return group, err
+	}
+	return GetGroup(id)
 }
