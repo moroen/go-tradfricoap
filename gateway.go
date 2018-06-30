@@ -33,8 +33,11 @@ func SetConfig(c GatewayConfig) {
 	globalGatewayConfig = c
 }
 
-func GetConfig() (conf GatewayConfig) {
-	return globalGatewayConfig
+func GetConfig() (conf GatewayConfig, err error) {
+	if globalGatewayConfig == (GatewayConfig{}) {
+		err = ErrorNoConfig
+	}
+	return globalGatewayConfig, err
 }
 
 func LoadConfig() (err error) {

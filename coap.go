@@ -18,12 +18,20 @@ type CoapResult struct {
 
 var ErrorTimeout = errors.New("COAP Error: Connection timeout")
 var ErrorBadIdent = errors.New("COAP DTLS Error: Wrong credentials?")
+var ErrorNoConfig = errors.New("COAP Error: No config")
 
 func _getRequest(URI string, c chan CoapResult) {
 
 	var result CoapResult
 
-	conn, err := canopus.DialDTLS(globalGatewayConfig.Gateway, globalGatewayConfig.Identity, globalGatewayConfig.Passkey)
+	conf, err := GetConfig()
+	if err != nil {
+		result.err = ErrorNoConfig
+		c <- result
+		return
+	}
+
+	conn, err := canopus.DialDTLS(conf.Gateway, conf.Identity, conf.Passkey)
 	if err != nil {
 		result.err = err
 		c <- result
@@ -50,7 +58,14 @@ func _getRequest(URI string, c chan CoapResult) {
 func _putRequest(URI, payload string, c chan CoapResult) {
 	var result CoapResult
 
-	conn, err := canopus.DialDTLS(globalGatewayConfig.Gateway, globalGatewayConfig.Identity, globalGatewayConfig.Passkey)
+	conf, err := GetConfig()
+	if err != nil {
+		result.err = ErrorNoConfig
+		c <- result
+		return
+	}
+
+	conn, err := canopus.DialDTLS(conf.Gateway, conf.Identity, conf.Passkey)
 	if err != nil {
 		result.err = err
 		c <- result

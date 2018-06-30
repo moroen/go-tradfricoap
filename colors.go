@@ -2,7 +2,10 @@ package tradfricoap
 
 import (
 	"fmt"
+	"log"
 	"sort"
+
+	colorful "github.com/lucasb-eyer/go-colorful"
 )
 
 type ColorMap map[int]map[string]string
@@ -60,4 +63,29 @@ func ListColorsInMap(colorMap ColorMap) {
 	for _, val := range keys {
 		fmt.Println(fmt.Sprintf("%d: %s", val, colorMap[val]["Name"]))
 	}
+}
+
+func SetRGB(id int64, rgb string) {
+	fmt.Printf("Device: %d - RGB: %s\n", id, rgb)
+	c, err := colorful.Hex("#517AB8")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	h, s, v := c.Hsv()
+	x, y, z := c.Xyz()
+
+	fmt.Println("HSV: ", h, s, v)
+
+	fmt.Println("xyZ:", x, y, z)
+
+	//uri := fmt.Sprintf("%s/%d", uri_Devices, id)
+
+	//payload := fmt.Sprintf("{ \"%s\": [{ \"%s\": %d }] }", attr_Light_control, attr_light_state, state)
+	//fmt.Println(payload)
+	//_, err = PutRequest(uri, payload)
+
+	// if err != nil {
+	//	return device, err
+	//}
 }
