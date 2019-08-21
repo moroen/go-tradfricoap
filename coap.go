@@ -77,14 +77,11 @@ func _request(req coap.Message) (retmsg coap.Message, err error) {
 	dtls.SetKeyStores([]dtls.Keystore{mks})
 	mks.AddKey(conf.Identity, []byte(conf.Passkey))
 
-	println("Keystore added")
-
 	listner, err := dtls.NewUdpListener(":0", time.Second*900)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	println("listner created")
 	peerParams := &dtls.PeerParams{
 		Addr:             fmt.Sprintf("%s:%d", conf.Gateway, 5684),
 		Identity:         conf.Identity,
@@ -95,10 +92,7 @@ func _request(req coap.Message) (retmsg coap.Message, err error) {
 		panic(err.Error())
 	}
 
-	println("Peer created")
-
 	peer.UseQueue(true)
-	println("DTLS connection established")
 
 	data, err := req.MarshalBinary()
 	if err != nil {
