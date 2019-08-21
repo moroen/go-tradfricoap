@@ -28,7 +28,7 @@ func GetGroup(id int64) (aGroup TradfriGroup, err error) {
 
 	// fmt.Println(msg.String())
 
-	currentGroup := msg.GetBytes()
+	currentGroup := msg.Payload
 	aGroup.Id = id
 
 	if value, err := jsonparser.GetString(currentGroup, attr_group_name); err == nil {
@@ -53,12 +53,12 @@ func GetGroup(id int64) (aGroup TradfriGroup, err error) {
 func GetGroups() (TradfriGroups, error) {
 	groups := []TradfriGroup{}
 
-	payload, err := GetRequest(uri_Groups)
+	result, err := GetRequest(uri_Groups)
 	if err != nil {
 		return nil, err
 	}
 
-	msg := payload.GetBytes()
+	msg := result.Payload
 
 	jsonparser.ArrayEach(msg, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		if res, err := jsonparser.GetInt(value); err == nil {

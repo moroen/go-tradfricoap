@@ -3,6 +3,7 @@ package tradfricoap
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/bradfitz/slice"
@@ -32,8 +33,7 @@ func GetLight(id int64) (TradfriLight, error) {
 		return aLight, err
 	}
 
-	aDevice := device.GetBytes()
-	// fmt.Println(string(device.String()))
+	aDevice := device.Payload
 
 	if _, _, _, err := jsonparser.Get(aDevice, attr_Light_control); err == nil {
 		if value, err := jsonparser.GetString(aDevice, attr_name); err == nil {
@@ -79,13 +79,15 @@ func GetLight(id int64) (TradfriLight, error) {
 }
 
 func GetDevices() (TradfriLights, error) {
-	payload, err := GetRequest(uri_Devices)
+	result, err := GetRequest(uri_Devices)
 	if err != nil {
 		// fmt.Println(err.Error())
 		return nil, err
 	}
 
-	msg := payload.GetBytes()
+	log.Println("Have result")
+
+	msg := result.Payload
 
 	lights := []TradfriLight{}
 
