@@ -114,6 +114,11 @@ func _request(req coap.Message) (retmsg coap.Message, err error) {
 		panic(err.Error())
 	}
 
+	err = listner.Shutdown()
+	if err != nil {
+		panic(err.Error())
+	}
+
 	return msg, nil
 }
 
