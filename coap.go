@@ -123,8 +123,6 @@ func _request(req coap.Message) (retmsg coap.Message, err error) {
 }
 
 func _getRequest(URI string, c chan coap.Message) {
-	println("Getting request")
-
 	req := coap.Message{
 		Type:      coap.Confirmable,
 		Code:      coap.GET,
