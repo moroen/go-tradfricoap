@@ -3,7 +3,6 @@ package tradfricoap
 import (
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/bradfitz/slice"
@@ -85,8 +84,6 @@ func GetDevices() (TradfriLights, error) {
 		return nil, err
 	}
 
-	log.Println("Have result")
-
 	msg := result.Payload
 
 	lights := []TradfriLight{}
@@ -121,7 +118,7 @@ func SetState(id int64, state int) (TradfriLight, error) {
 
 func SetLevel(id int64, level int) (device TradfriLight, err error) {
 	uri := fmt.Sprintf("%s/%d", uri_Devices, id)
-	payload := fmt.Sprintf("{ \"%s\": [{ \"%s\": %d }] }", attr_Light_control, attr_light_dimmer, level)
+	payload := fmt.Sprintf("{ \"%s\": [{ \"%s\": %d, \"%s\": %d }] }", attr_Light_control, attr_light_dimmer, level, attr_transition_time, 10)
 	_, err = PutRequest(uri, payload)
 	if err != nil {
 		return device, err

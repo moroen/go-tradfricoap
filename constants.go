@@ -21,6 +21,7 @@ const attr_Light_control = "3311"
 const attr_light_state = "5850"
 const attr_light_dimmer = "5851"
 const attr_light_hex = "5706"
+const attr_transition_time = "5712"
 
 // Groups
 const attr_group_name = "9001"
