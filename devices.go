@@ -29,3 +29,9 @@ func ValidateOnOff(arg string) error {
 		return fmt.Errorf("%s isn't an allowed setting, use 'on', 'off', '1' or '0'", arg)
 	}
 }
+
+/*
+func GetDevices() (TradfriLights, TradfriPlugs, TradfriGroups, error) {
+
+}
+*/

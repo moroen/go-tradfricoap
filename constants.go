@@ -25,3 +25,7 @@ const attr_transition_time = "5712"
 
 // Groups
 const attr_group_name = "9001"
+
+// Plugs
+const attr_plug_control = "3312"
+const attr_plug_state = "5850"

@@ -77,7 +77,7 @@ func GetLight(id int64) (TradfriLight, error) {
 	return aLight, err
 }
 
-func GetDevices() (TradfriLights, error) {
+func GetLights() (TradfriLights, error) {
 	result, err := GetRequest(uri_Devices)
 	if err != nil {
 		// fmt.Println(err.Error())
