@@ -17,14 +17,13 @@ import (
 	"github.com/eriklupander/dtls"
 )
 
-/*
-type CoapResult struct {
-	msg canopus.MessagePayload
-	err error
-}
-*/
+// ErrorTimeout error
 var ErrorTimeout = errors.New("COAP Error: Connection timeout")
+
+// ErrorBadIdent error
 var ErrorBadIdent = errors.New("COAP DTLS Error: Wrong credentials?")
+
+// ErrorNoConfig error
 var ErrorNoConfig = errors.New("COAP Error: No config")
 
 /*

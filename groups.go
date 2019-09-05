@@ -2,8 +2,10 @@ package tradfricoap
 
 import (
 	"fmt"
+	"sort"
+
 	// "sort"
-	"github.com/bradfitz/slice"
+
 	"github.com/buger/jsonparser"
 )
 
@@ -21,7 +23,7 @@ func (g TradfriGroup) Describe() string {
 type TradfriGroups []TradfriGroup
 
 func GetGroup(id int64) (aGroup TradfriGroup, err error) {
-	msg, err := GetRequest(fmt.Sprintf("%s/%d", uri_Groups, id))
+	msg, err := GetRequest(fmt.Sprintf("%s/%d", uriGroups, id))
 	if err != nil {
 		return aGroup, err
 	}
@@ -31,11 +33,11 @@ func GetGroup(id int64) (aGroup TradfriGroup, err error) {
 	currentGroup := msg.Payload
 	aGroup.Id = id
 
-	if value, err := jsonparser.GetString(currentGroup, attr_group_name); err == nil {
+	if value, err := jsonparser.GetString(currentGroup, attrGroupName); err == nil {
 		aGroup.Name = value
 	}
 
-	if value, err := jsonparser.GetInt(currentGroup, attr_light_state); err == nil {
+	if value, err := jsonparser.GetInt(currentGroup, attrLightState); err == nil {
 		if value == 1 {
 			aGroup.State = "On"
 		} else {
@@ -43,7 +45,7 @@ func GetGroup(id int64) (aGroup TradfriGroup, err error) {
 		}
 	}
 
-	if value, err := jsonparser.GetInt(currentGroup, attr_light_dimmer); err == nil {
+	if value, err := jsonparser.GetInt(currentGroup, attrLightDimmer); err == nil {
 		aGroup.Dimmer = value
 	}
 
@@ -53,14 +55,14 @@ func GetGroup(id int64) (aGroup TradfriGroup, err error) {
 func GetGroups() (TradfriGroups, error) {
 	groups := []TradfriGroup{}
 
-	result, err := GetRequest(uri_Groups)
+	result, err := GetRequest(uriGroups)
 	if err != nil {
 		return nil, err
 	}
 
 	msg := result.Payload
 
-	jsonparser.ArrayEach(msg, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+	_, err = jsonparser.ArrayEach(msg, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		if res, err := jsonparser.GetInt(value); err == nil {
 			aGroup, err := GetGroup(res)
 			if err == nil {
@@ -68,8 +70,11 @@ func GetGroups() (TradfriGroups, error) {
 			}
 		}
 	})
+	if err != nil {
+		panic(err.Error())
+	}
 
-	slice.Sort(groups, func(i, j int) bool {
+	sort.Slice(groups, func(i, j int) bool {
 		return groups[i].Id < groups[j].Id
 	})
 
@@ -77,8 +82,8 @@ func GetGroups() (TradfriGroups, error) {
 }
 
 func GroupSetState(id int64, state int) (group TradfriGroup, err error) {
-	uri := fmt.Sprintf("%s/%d", uri_Groups, id)
-	payload := fmt.Sprintf("{\"%s\":%d}", attr_light_state, state)
+	uri := fmt.Sprintf("%s/%d", uriGroups, id)
+	payload := fmt.Sprintf("{\"%s\":%d}", attrLightState, state)
 	// fmt.Println(uri, payload)
 	_, err = PutRequest(uri, payload)
 	if err != nil {
@@ -88,8 +93,8 @@ func GroupSetState(id int64, state int) (group TradfriGroup, err error) {
 }
 
 func GroupSetLevel(id int64, level int) (group TradfriGroup, err error) {
-	uri := fmt.Sprintf("%s/%d", uri_Groups, id)
-	payload := fmt.Sprintf("{\"%s\":%d}", attr_light_dimmer, level)
+	uri := fmt.Sprintf("%s/%d", uriGroups, id)
+	payload := fmt.Sprintf("{\"%s\":%d}", attrLightDimmer, level)
 	_, err = PutRequest(uri, payload)
 	if err != nil {
 		return group, err

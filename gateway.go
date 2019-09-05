@@ -52,8 +52,10 @@ func LoadConfig() (config GatewayConfig, err error) {
 		return config, errors.New("Config not found")
 	}
 
-	json.Unmarshal(data, &config)
-	SetConfig(config)
+	if err := json.Unmarshal(data, &config); err == nil {
+		SetConfig(config)
+	}
+
 	return config, nil
 }
 

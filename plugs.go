@@ -2,8 +2,8 @@ package tradfricoap
 
 import (
 	"fmt"
+	"sort"
 
-	"github.com/bradfitz/slice"
 	"github.com/buger/jsonparser"
 )
 
@@ -20,18 +20,19 @@ func (p TradfriPlug) Describe() string {
 	return fmt.Sprintf("%d: %s (%s) - %s", p.Id, p.Name, p.Model, p.State)
 }
 
-func (p *TradfriPlug) getInfo(aDevice []byte) error {
+func getPlugInfo(aDevice []byte) (TradfriPlug, error) {
+	var p TradfriPlug
 
-	if value, err := jsonparser.GetString(aDevice, attr_name); err == nil {
+	if value, err := jsonparser.GetString(aDevice, attrName); err == nil {
 		p.Name = value
 	}
 
-	if value, err := jsonparser.GetInt(aDevice, attr_id); err == nil {
+	if value, err := jsonparser.GetInt(aDevice, attrId); err == nil {
 		p.Id = value
 	}
 
-	jsonparser.ArrayEach(aDevice, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-		if res, err := jsonparser.GetInt(value, attr_plug_state); err == nil {
+	_, err := jsonparser.ArrayEach(aDevice, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		if res, err := jsonparser.GetInt(value, attrPlugState); err == nil {
 			p.State = func() string {
 				if res == 1 {
 					return "On"
@@ -40,25 +41,27 @@ func (p *TradfriPlug) getInfo(aDevice []byte) error {
 				}
 			}()
 		}
-	}, attr_plug_control)
-
-	if value, err := jsonparser.GetString(aDevice, attr_DeviceInfo, attr_DeviceInfo_Model); err == nil {
-		p.Model = value
+	}, attrPlugControl)
+	if err != nil {
+		return p, err
 	}
 
-	return nil
+	if value, err := jsonparser.GetString(aDevice, attrDeviceInfo, attrDeviceInfo_Model); err == nil {
+		p.Model = value
+	}
+	return p, err
 }
 
 func GetPlug(id int64) (TradfriPlug, error) {
 	var aPlug TradfriPlug
 
-	msg, err := GetRequest(fmt.Sprintf("%s/%d", uri_Devices, id))
+	msg, err := GetRequest(fmt.Sprintf("%s/%d", uriDevices, id))
 	if err != nil {
 		return aPlug, err
 	}
 
-	if _, _, _, err := jsonparser.Get(msg.Payload, attr_plug_control); err == nil {
-		err = aPlug.getInfo(msg.Payload)
+	if _, _, _, err := jsonparser.Get(msg.Payload, attrPlugControl); err == nil {
+		aPlug, err := getPlugInfo((msg.Payload))
 		return aPlug, err
 	} else {
 		return aPlug, fmt.Errorf("device %d is not a plug", id)
@@ -66,7 +69,7 @@ func GetPlug(id int64) (TradfriPlug, error) {
 }
 
 func GetPlugs() (TradfriPlugs, error) {
-	result, err := GetRequest(uri_Devices)
+	result, err := GetRequest(uriDevices)
 	if err != nil {
 		// fmt.Println(err.Error())
 		return nil, err
@@ -76,7 +79,7 @@ func GetPlugs() (TradfriPlugs, error) {
 
 	plugs := []TradfriPlug{}
 
-	jsonparser.ArrayEach(msg, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+	_, err = jsonparser.ArrayEach(msg, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		if res, err := jsonparser.GetInt(value); err == nil {
 			aPlug, err := GetPlug(res)
 			if err == nil {
@@ -84,8 +87,11 @@ func GetPlugs() (TradfriPlugs, error) {
 			}
 		}
 	})
+	if err != nil {
+		panic(err.Error())
+	}
 
-	slice.Sort(plugs, func(i, j int) bool {
+	sort.Slice(plugs, func(i, j int) bool {
 		return plugs[i].Id < plugs[j].Id
 	})
 
