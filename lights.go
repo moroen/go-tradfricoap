@@ -76,7 +76,7 @@ func GetLight(id int64) (TradfriLight, error) {
 		return aLight, err
 	}
 
-	aDevice := device.Payload
+	aDevice := device
 
 	if _, _, _, err := jsonparser.Get(aDevice, attrLightControl); err == nil {
 		aLight, err := getLightInfo(aDevice)
@@ -93,7 +93,7 @@ func GetLights() (TradfriLights, error) {
 		return nil, err
 	}
 
-	msg := result.Payload
+	msg := result
 
 	lights := []TradfriLight{}
 

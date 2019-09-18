@@ -38,7 +38,7 @@ func GetDevice(id int64) ([]byte, error) {
 		return nil, err
 	}
 
-	return msg.Payload, err
+	return msg, err
 }
 
 func GetDevices() (lights TradfriLights, plugs TradfriPlugs, groups TradfriGroups, err error) {
@@ -48,7 +48,7 @@ func GetDevices() (lights TradfriLights, plugs TradfriPlugs, groups TradfriGroup
 		return nil, nil, nil, err
 	}
 
-	msg := result.Payload
+	msg := result
 
 	_, err = jsonparser.ArrayEach(msg, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		if res, err := jsonparser.GetInt(value); err == nil {

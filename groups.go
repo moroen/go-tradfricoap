@@ -30,7 +30,7 @@ func GetGroup(id int64) (aGroup TradfriGroup, err error) {
 
 	// fmt.Println(msg.String())
 
-	currentGroup := msg.Payload
+	currentGroup := msg
 	aGroup.Id = id
 
 	if value, err := jsonparser.GetString(currentGroup, attrGroupName); err == nil {
@@ -60,7 +60,7 @@ func GetGroups() (TradfriGroups, error) {
 		return nil, err
 	}
 
-	msg := result.Payload
+	msg := result
 
 	_, err = jsonparser.ArrayEach(msg, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		if res, err := jsonparser.GetInt(value); err == nil {

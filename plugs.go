@@ -60,8 +60,8 @@ func GetPlug(id int64) (TradfriPlug, error) {
 		return aPlug, err
 	}
 
-	if _, _, _, err := jsonparser.Get(msg.Payload, attrPlugControl); err == nil {
-		aPlug, err := getPlugInfo((msg.Payload))
+	if _, _, _, err := jsonparser.Get(msg, attrPlugControl); err == nil {
+		aPlug, err := getPlugInfo((msg))
 		return aPlug, err
 	} else {
 		return aPlug, fmt.Errorf("device %d is not a plug", id)
@@ -75,7 +75,7 @@ func GetPlugs() (TradfriPlugs, error) {
 		return nil, err
 	}
 
-	msg := result.Payload
+	msg := result
 
 	plugs := []TradfriPlug{}
 

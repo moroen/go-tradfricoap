@@ -7,6 +7,8 @@ import (
 
 	"github.com/shibukawa/configdir"
 	"github.com/tucnak/store"
+
+	coap "github.com/moroen/gocoap"
 )
 
 var globalGatewayConfig GatewayConfig
@@ -16,6 +18,9 @@ type GatewayConfig struct {
 	Identity string
 	Passkey  string
 }
+
+// ErrorNoConfig error
+var ErrorNoConfig = errors.New("Tradfri Error: No config")
 
 func (c GatewayConfig) Describe() string {
 	out, _ := json.Marshal(c)
@@ -104,4 +109,32 @@ func CreateIdent(gateway, key, ident string) {
 		// response := resp.GetMessage().GetPayload()
 		// fmt.Println("Response: ", response.String())
 	*/
+}
+
+func GetRequest(URI string) (retmsg []byte, err error) {
+	var param coap.RequestParams
+
+	conf, err := GetConfig()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	log.Println(param, conf)
+
+	coap.GetRequest(param)
+	return []byte("test"), nil
+}
+
+func PutRequest(URI string, Payload string) (retmsg []byte, err error) {
+	var param coap.RequestParams
+
+	conf, err := GetConfig()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	log.Println(param, conf)
+
+	coap.PutRequest(param)
+	return []byte("test"), nil
 }
