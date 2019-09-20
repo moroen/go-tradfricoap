@@ -112,29 +112,35 @@ func CreateIdent(gateway, key, ident string) {
 }
 
 func GetRequest(URI string) (retmsg []byte, err error) {
-	var param coap.RequestParams
 
 	conf, err := GetConfig()
 	if err != nil {
 		panic(err.Error())
 	}
 
-	log.Println(param, conf)
+	param := coap.RequestParams{Host: conf.Gateway, Port: 5684, Uri: URI, Id: conf.Identity, Key: conf.Passkey}
 
-	coap.GetRequest(param)
-	return []byte("test"), nil
+	res, err := coap.GetRequest(param)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return res, nil
 }
 
 func PutRequest(URI string, Payload string) (retmsg []byte, err error) {
-	var param coap.RequestParams
 
 	conf, err := GetConfig()
 	if err != nil {
 		panic(err.Error())
 	}
 
-	log.Println(param, conf)
+	param := coap.RequestParams{Host: conf.Gateway, Port: 5684, Uri: URI, Id: conf.Identity, Key: conf.Passkey, Payload: Payload}
 
-	coap.PutRequest(param)
-	return []byte("test"), nil
+	res, err := coap.PutRequest(param)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return res, nil
 }
