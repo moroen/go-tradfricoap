@@ -122,10 +122,14 @@ func GetRequest(URI string) (retmsg []byte, err error) {
 
 	res, err := coap.GetRequest(param)
 	if err != nil {
-		panic(err.Error())
+		if err == coap.ErrorHandshake {
+			log.Fatalln("Connection timed out")
+		} else {
+			panic(err.Error())
+		}
 	}
 
-	return res, nil
+	return res, err
 }
 
 func PutRequest(URI string, Payload string) (retmsg []byte, err error) {
