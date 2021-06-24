@@ -1,50 +1,58 @@
 package tradfricoap
 
 import (
-	"log"
+	"fmt"
+
+	coap "github.com/moroen/gocoap/v4"
+	log "github.com/sirupsen/logrus"
 )
 
-func Observe() {
+func ObserveStop() {
+	coap.ObserveStop()
+}
 
-	log.Println("Observe called")
+func ObserveRestart(reconnect bool) {
+	coap.ObserveRestart(reconnect)
+}
 
-	/*
-		conf, err := GetConfig()
-		if err != nil {
-			panic(err.Error())
-		}
+func Observe(callback func([]byte) error, control_channel chan (error)) error {
+	var endPoints []string
 
-		param := coap.ObserveParams{Host: conf.Gateway, Port: 5684, ID: conf.Identity, Key: conf.Passkey}
+	conf, err := GetConfig()
+	if err != nil {
+		log.Println(err.Error())
+	}
 
-		endpoints := `["15001/65554", "15001/65550"]`
+	log.WithFields(log.Fields{
+		"Id":  conf.Identity,
+		"Key": conf.Passkey,
+	}).Debug("COAP observe")
 
-		var uris []string
+	param := coap.ObserveParams{Host: conf.Gateway, Port: 5684, Id: conf.Identity, Key: conf.Passkey}
 
-		err = json.Unmarshal([]byte(endpoints), &uris)
-		if err != nil {
-			panic(err.Error())
-		}
+	lights, plugs, blinds, _, err := GetDevices()
 
-		param.URI = uris
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err.Error(),
+		}).Error("Observe - get endpoints failed")
+		control_channel <- err
+		return err
+	}
 
-		msg := make(chan []byte)
-		sign := make(chan bool)
-		obserr := make(chan error)
+	for _, light := range lights {
+		endPoints = append(endPoints, fmt.Sprintf("15001/%d", light.Id))
+	}
 
-		state := 0
+	for _, plug := range plugs {
+		endPoints = append(endPoints, fmt.Sprintf("15001/%d", plug.Id))
+	}
 
-		go coap.Observe(param, msg, sign, obserr)
-		for {
-			select {
-			case message := <-msg:
-				fmt.Println(string(message))
-			case <-time.After(10 * time.Second):
-				SetState(65554, state)
-				state = 1 - state
-			case <-time.After(120 * time.Second):
-				sign <- true
-				return
-			}
-		}
-	*/
+	for _, blind := range blinds {
+		endPoints = append(endPoints, fmt.Sprintf("15001/%d", blind.Id))
+	}
+
+	param.Uri = endPoints
+	go coap.Observe(param, callback)
+	return nil
 }

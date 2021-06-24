@@ -2,7 +2,8 @@ package tradfricoap
 
 import (
 	"fmt"
-	"log"
+
+	log "github.com/sirupsen/logrus"
 
 	// "sort"
 
@@ -12,17 +13,17 @@ import (
 type TradfriBlind struct {
 	Id    int64
 	Name  string
-	State float64
+	Level float64
 	Model string
 }
 
 type TradfriBlinds []TradfriBlind
 
 func (p TradfriBlind) Describe() string {
-	return fmt.Sprintf("%d: %s (%s) - %.1f", p.Id, p.Name, p.Model, p.State)
+	return fmt.Sprintf("%d: %s (%s) - %.1f", p.Id, p.Name, p.Model, p.Level)
 }
 
-func getBlindInfo(aDevice []byte) (TradfriBlind, error) {
+func ParseBlindInfo(aDevice []byte) (TradfriBlind, error) {
 	var p TradfriBlind
 
 	if value, err := jsonparser.GetString(aDevice, attrName); err == nil {
@@ -35,7 +36,7 @@ func getBlindInfo(aDevice []byte) (TradfriBlind, error) {
 
 	_, err := jsonparser.ArrayEach(aDevice, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		if res, err := jsonparser.GetFloat(value, attrBlindPosition); err == nil {
-			p.State = res
+			p.Level = res
 		}
 	}, attrBlindControl)
 	if err != nil {
@@ -59,7 +60,7 @@ func getBlind(id int64) (TradfriBlind, error) {
 	aDevice := device
 
 	if _, _, _, err := jsonparser.Get(aDevice, attrBlindControl); err == nil {
-		aBlind, err := getBlindInfo(aDevice)
+		aBlind, err := ParseBlindInfo(aDevice)
 		return aBlind, err
 	} else {
 		return aBlind, fmt.Errorf("device %d is not a blind", id)

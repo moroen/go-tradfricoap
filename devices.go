@@ -1,12 +1,13 @@
 package tradfricoap
 
-import ( // "log"
+import ( // log "github.com/sirupsen/logrus"
 	// "os"
 	"fmt"
-	"log"
 	"sort"
 	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/buger/jsonparser"
 	// "github.com/moroen/canopus"
@@ -61,21 +62,21 @@ func GetDevices() (lights TradfriLights, plugs TradfriPlugs, blinds TradfriBlind
 			}
 
 			if _, _, _, err := jsonparser.Get(aDevice, attrLightControl); err == nil {
-				if aLight, err := getLightInfo(aDevice); err == nil {
+				if aLight, err := ParseLightInfo(aDevice); err == nil {
 					lights = append(lights, aLight)
 				}
 
 			}
 
 			if _, _, _, err := jsonparser.Get(aDevice, attrPlugControl); err == nil {
-				if aPlug, err := getPlugInfo(aDevice); err == nil {
+				if aPlug, err := ParsePlugInfo(aDevice); err == nil {
 					plugs = append(plugs, aPlug)
 				}
 
 			}
 
 			if _, _, _, err := jsonparser.Get(aDevice, attrBlindControl); err == nil {
-				if aBlind, err := getBlindInfo(aDevice); err == nil {
+				if aBlind, err := ParseBlindInfo(aDevice); err == nil {
 					blinds = append(blinds, aBlind)
 				}
 

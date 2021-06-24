@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/buger/jsonparser"
 	"github.com/shibukawa/configdir"
 
 	coap "github.com/moroen/gocoap/v4"
+	uuid "github.com/satori/go.uuid"
 )
 
 var globalGatewayConfig GatewayConfig
@@ -42,8 +44,16 @@ func GetConfig() (conf GatewayConfig, err error) {
 }
 
 func LoadConfig() (config GatewayConfig, err error) {
+	return _loadConfig("gateway.json")
+}
 
-	folder := configDirs.QueryFolderContainsFile("gateway.json")
+func LoadConfigFile(fName string) (config GatewayConfig, err error) {
+	return _loadConfig(fName)
+}
+
+func _loadConfig(fName string) (config GatewayConfig, err error) {
+
+	folder := configDirs.QueryFolderContainsFile(fName)
 
 	if folder == nil {
 		return config, errors.New("Config not found")
@@ -97,6 +107,34 @@ func CreateIdent(gateway, key, ident string) error {
 	return nil
 }
 
+type DTLSPSKpair struct {
+	Ident string
+	Key   string
+}
+
+func GetNewPSK(gateway, key string) (DTLSPSKpair, error) {
+
+	ident := uuid.NewV4().String()
+
+	payload := fmt.Sprintf("{\"%s\":\"%s\"}", attrIdent, ident)
+	URI := uriIdent
+
+	param := coap.RequestParams{Host: gateway, Port: 5684, Uri: URI, Id: "Client_identity", Key: key, Payload: payload}
+
+	coap.CloseDTLSConnection()
+	res, err := coap.PostRequest(param)
+	if err != nil {
+		return DTLSPSKpair{}, err
+	}
+
+	psk, err := jsonparser.GetString(res, "9091")
+	if err != nil {
+		return DTLSPSKpair{}, err
+	}
+
+	return DTLSPSKpair{Ident: ident, Key: psk}, nil
+}
+
 func GetRequest(URI string) (retmsg []byte, err error) {
 
 	conf, err := GetConfig()
@@ -108,11 +146,10 @@ func GetRequest(URI string) (retmsg []byte, err error) {
 
 	res, err := coap.GetRequest(param)
 	if err != nil {
-		if err == coap.ErrorHandshake {
-			log.Fatalln("Connection timed out")
-		} else {
-			log.Println(err.Error())
-			// panic(err.Error())
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err.Error(),
+			}).Error("GetRequest failed")
 		}
 	}
 
@@ -120,6 +157,7 @@ func GetRequest(URI string) (retmsg []byte, err error) {
 }
 
 func PutRequest(URI string, Payload string) (retmsg []byte, err error) {
+	var res []byte
 
 	conf, err := GetConfig()
 	if err != nil {
@@ -128,10 +166,19 @@ func PutRequest(URI string, Payload string) (retmsg []byte, err error) {
 
 	param := coap.RequestParams{Host: conf.Gateway, Port: 5684, Uri: URI, Id: conf.Identity, Key: conf.Passkey, Payload: Payload}
 
-	res, err := coap.PutRequest(param)
+	res, err = coap.PutRequest(param)
 	if err != nil {
-		panic(err.Error())
+		log.WithFields(log.Fields{
+			"error": err.Error(),
+		}).Error("PutRequest failed")
 	}
+	return res, err
+}
 
-	return res, nil
+func SetCoapRetry(limit uint, delay int) {
+	coap.SetRetry(limit, delay)
+}
+
+func CloseDTLSConnection() error {
+	return coap.CloseDTLSConnection()
 }

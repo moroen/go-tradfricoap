@@ -2,8 +2,9 @@ package tradfricoap
 
 import (
 	"fmt"
-	"log"
 	"sort"
+
+	log "github.com/sirupsen/logrus"
 
 	colorful "github.com/lucasb-eyer/go-colorful"
 )

@@ -8,19 +8,20 @@ import (
 )
 
 type TradfriPlug struct {
-	Id    int64
-	Name  string
-	State string
-	Model string
+	Id               int64
+	Name             string
+	State            bool
+	StateDescription string
+	Model            string
 }
 
 type TradfriPlugs []TradfriPlug
 
 func (p TradfriPlug) Describe() string {
-	return fmt.Sprintf("%d: %s (%s) - %s", p.Id, p.Name, p.Model, p.State)
+	return fmt.Sprintf("%d: %s (%s) - %s", p.Id, p.Name, p.Model, p.StateDescription)
 }
 
-func getPlugInfo(aDevice []byte) (TradfriPlug, error) {
+func ParsePlugInfo(aDevice []byte) (TradfriPlug, error) {
 	var p TradfriPlug
 
 	if value, err := jsonparser.GetString(aDevice, attrName); err == nil {
@@ -33,11 +34,11 @@ func getPlugInfo(aDevice []byte) (TradfriPlug, error) {
 
 	_, err := jsonparser.ArrayEach(aDevice, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		if res, err := jsonparser.GetInt(value, attrPlugState); err == nil {
-			p.State = func() string {
+			p.StateDescription, p.State = func() (string, bool) {
 				if res == 1 {
-					return "On"
+					return "On", true
 				} else {
-					return "Off"
+					return "Off", false
 				}
 			}()
 		}
@@ -61,7 +62,7 @@ func GetPlug(id int64) (TradfriPlug, error) {
 	}
 
 	if _, _, _, err := jsonparser.Get(msg, attrPlugControl); err == nil {
-		aPlug, err := getPlugInfo((msg))
+		aPlug, err := ParsePlugInfo((msg))
 		return aPlug, err
 	} else {
 		return aPlug, fmt.Errorf("device %d is not a plug", id)

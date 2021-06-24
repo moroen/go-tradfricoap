@@ -9,21 +9,22 @@ import (
 )
 
 type TradfriLight struct {
-	Id     int64
-	Name   string
-	State  string
-	Dimmer int64
-	Model  string
-	Colors ColorMap
+	Id               int64
+	Name             string
+	StateDescription string
+	State            bool
+	Dimmer           int64
+	Model            string
+	Colors           ColorMap
 }
 
 type TradfriLights []TradfriLight
 
 func (l TradfriLight) Describe() string {
-	return fmt.Sprintf("%d: %s (%s) - %s (%d)", l.Id, l.Name, l.Model, l.State, l.Dimmer)
+	return fmt.Sprintf("%d: %s (%s) - %s (%d)", l.Id, l.Name, l.Model, l.StateDescription, l.Dimmer)
 }
 
-func getLightInfo(aDevice []byte) (TradfriLight, error) {
+func ParseLightInfo(aDevice []byte) (TradfriLight, error) {
 	var aLight TradfriLight
 
 	if value, err := jsonparser.GetString(aDevice, attrName); err == nil {
@@ -36,11 +37,11 @@ func getLightInfo(aDevice []byte) (TradfriLight, error) {
 
 	_, err := jsonparser.ArrayEach(aDevice, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		if res, err := jsonparser.GetInt(value, attrLightState); err == nil {
-			aLight.State = func() string {
+			aLight.StateDescription, aLight.State = func() (string, bool) {
 				if res == 1 {
-					return "On"
+					return "On", true
 				} else {
-					return "Off"
+					return "Off", false
 				}
 			}()
 		}
@@ -79,7 +80,7 @@ func GetLight(id int64) (TradfriLight, error) {
 	aDevice := device
 
 	if _, _, _, err := jsonparser.Get(aDevice, attrLightControl); err == nil {
-		aLight, err := getLightInfo(aDevice)
+		aLight, err := ParseLightInfo(aDevice)
 		return aLight, err
 	} else {
 		return aLight, fmt.Errorf("Device %d is not a light.", id)
@@ -116,49 +117,36 @@ func GetLights() (TradfriLights, error) {
 	return lights, err
 }
 
-func SetState(id int64, state int) (TradfriLight, error) {
-	device := TradfriLight{}
-
+func SetState(id int64, state int) (err error) {
 	uri := fmt.Sprintf("%s/%d", uriDevices, id)
 	payload := fmt.Sprintf("{ \"%s\": [{ \"%s\": %d }] }", attrLightControl, attrLightState, state)
 
-	_, err := PutRequest(uri, payload)
-	if err != nil {
-		return device, err
-	}
-	return GetLight(id)
+	_, err = PutRequest(uri, payload)
+	return err
 }
 
-func SetLevel(id int64, level int) (device TradfriLight, err error) {
+func SetLevel(id int64, level int) (err error) {
 	uri := fmt.Sprintf("%s/%d", uriDevices, id)
 	payload := fmt.Sprintf("{ \"%s\": [{ \"%s\": %d, \"%s\": %d }] }", attrLightControl, attrLightDimmer, level, attrTransitionTime, 10)
 	_, err = PutRequest(uri, payload)
-	if err != nil {
-		return device, err
-	}
-	return GetLight(id)
+	return err
 }
 
-func SetHex(id int64, hex string) (device TradfriLight, err error) {
+func SetHex(id int64, hex string) (err error) {
 	uri := fmt.Sprintf("%s/%d", uriDevices, id)
 	payload := fmt.Sprintf("{ \"%s\": [{ \"%s\": \"%s\" }] }", attrLightControl, attrLightHex, hex)
 
 	_, err = PutRequest(uri, payload)
-	if err != nil {
-		return device, err
-	}
-	return GetLight(id)
+	return err
 }
 
-func SetHexForLevel(id int64, level int) (device TradfriLight, err error) {
-	device, err = GetLight(id)
-	if err != nil {
-		return device, err
+func SetHexForLevel(id int64, level int) (err error) {
+	if device, err := GetLight(id); err == nil {
+		if hex, keyExists := device.Colors[level]["Hex"]; keyExists {
+			return SetHex(id, hex)
+		} else {
+			return fmt.Errorf("Unknown colorlevel %d", level)
+		}
 	}
-
-	if hex, keyExists := device.Colors[level]["Hex"]; keyExists {
-		return SetHex(id, hex)
-	} else {
-		return device, fmt.Errorf("Unknown colorlevel %d", level)
-	}
+	return err
 }
