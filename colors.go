@@ -1,6 +1,7 @@
 package tradfricoap
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 
@@ -11,7 +12,7 @@ import (
 
 type ColorMap map[int]map[string]string
 
-func cwMap() ColorMap {
+func CWmap() ColorMap {
 	var whiteBalance = ColorMap{
 		0:  {"Name": "Off", "Hex": "000000"},
 		10: {"Name": "Cold", "Hex": "f5faf6"},
@@ -22,7 +23,7 @@ func cwMap() ColorMap {
 	return whiteBalance
 }
 
-func cwsMap() ColorMap {
+func CWSmap() ColorMap {
 	var cws = ColorMap{
 		0:   {"Name": "Off", "Hex": "000000"},
 		10:  {"Name": "Blue", "Hex": "4a418a"},
@@ -89,4 +90,27 @@ func SetRGB(id int64, rgb string) {
 	// if err != nil {
 	//	return device, err
 	//}
+}
+
+func GetColorMap(ColorSpace string) (ColorMap, error) {
+	switch ColorSpace {
+	case "CWS":
+		return CWSmap(), nil
+	case "WS":
+		return CWmap(), nil
+	default:
+		return nil, errors.New("Unknown colorspace")
+	}
+}
+
+func GetLevelForHex(ColorSpace, hex string) (int, error) {
+	if colorMap, err := GetColorMap(ColorSpace); err == nil {
+		for key, value := range colorMap {
+			if value["Hex"] == hex {
+				return key, nil
+			}
+		}
+	}
+
+	return 0, nil
 }

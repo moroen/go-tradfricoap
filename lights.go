@@ -15,13 +15,21 @@ type TradfriLight struct {
 	State            bool
 	Dimmer           int64
 	Model            string
-	Colors           ColorMap
+	ColorSpace       string
+	Hex              string
 }
 
 type TradfriLights []TradfriLight
 
 func (l TradfriLight) Describe() string {
 	return fmt.Sprintf("%d: %s (%s) - %s (%d)", l.Id, l.Name, l.Model, l.StateDescription, l.Dimmer)
+}
+
+func (l TradfriLight) HexLevel() int {
+	if level, err := GetLevelForHex(l.ColorSpace, l.Hex); err == nil {
+		return level
+	}
+	return 0
 }
 
 func ParseLightInfo(aDevice []byte) (TradfriLight, error) {
@@ -50,6 +58,10 @@ func ParseLightInfo(aDevice []byte) (TradfriLight, error) {
 			aLight.Dimmer = res
 		}
 
+		if res, err := jsonparser.GetString(value, attrLightHex); err == nil {
+			aLight.Hex = res
+		}
+
 	}, attrLightControl)
 	if err != nil {
 		return aLight, err
@@ -58,11 +70,11 @@ func ParseLightInfo(aDevice []byte) (TradfriLight, error) {
 	if value, err := jsonparser.GetString(aDevice, attrDeviceInfo, attrDeviceInfo_Model); err == nil {
 		aLight.Model = value
 		if strings.Contains(value, " CWS ") {
-			aLight.Colors = cwsMap()
+			aLight.ColorSpace = "CWS"
 		} else if strings.Contains(value, " WS ") {
-			aLight.Colors = cwMap()
+			aLight.ColorSpace = "WS"
 		} else {
-			aLight.Colors = nil
+			aLight.ColorSpace = ""
 		}
 	}
 
@@ -141,8 +153,16 @@ func SetHex(id int64, hex string) (err error) {
 }
 
 func SetHexForLevel(id int64, level int) (err error) {
+	var colorMap ColorMap
+
 	if device, err := GetLight(id); err == nil {
-		if hex, keyExists := device.Colors[level]["Hex"]; keyExists {
+		if device.ColorSpace == "CWS" {
+			colorMap = CWSmap()
+		} else {
+			colorMap = CWmap()
+		}
+
+		if hex, keyExists := colorMap[level]["Hex"]; keyExists {
 			return SetHex(id, hex)
 		} else {
 			return fmt.Errorf("Unknown colorlevel %d", level)
