@@ -67,29 +67,49 @@ func ListColorsInMap(colorMap ColorMap) {
 	}
 }
 
-func SetRGB(id int64, rgb string) {
+func SetXY(id int64, x int64, y int64) error {
+	uri := fmt.Sprintf("%s/%d", uriDevices, 65554)
+	payload := fmt.Sprintf("{ \"3311\": [{\"5709\": %d, \"5710\": %d}] }", x, y)
+
+	log.WithFields(log.Fields{
+		uri:     uri,
+		payload: payload,
+	}).Debug()
+
+	if _, err := PutRequest(uri, payload); err != nil {
+		return err
+	}
+	return nil
+
+}
+
+func SetRGB(id int64, rgb string) error {
 	fmt.Printf("Device: %d - RGB: %s\n", id, rgb)
-	c, err := colorful.Hex("#517AB8")
+	c, err := colorful.Hex(rgb)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	h, s, v := c.Hsv()
-	x, y, z := c.Xyz()
+	// h, s, v := c.Hsv()
+	// x, y, z := c.Xyz()
+	x, y, lum := c.Xyy()
 
-	fmt.Println("HSV: ", h, s, v)
+	// fmt.Println("HSV: ", h, s, v)
 
-	fmt.Println("xyZ:", x, y, z)
+	fmt.Println("xyY:", x, y, lum)
 
-	//uri := fmt.Sprintf("%s/%d", uri_Devices, id)
+	x = x * 65535
+	y = y * 65535
+
+	uri := fmt.Sprintf("%s/%d", uriDevices, 65554)
+	payload := fmt.Sprintf("{ \"3311\": [{\"5709\": %d, \"5710\": %d}] }", int(x), int(y))
 
 	//payload := fmt.Sprintf("{ \"%s\": [{ \"%s\": %d }] }", attr_Light_control, attr_light_state, state)
-	//fmt.Println(payload)
-	//_, err = PutRequest(uri, payload)
-
-	// if err != nil {
-	//	return device, err
-	//}
+	fmt.Println(payload)
+	if _, err = PutRequest(uri, payload); err != nil {
+		return err
+	}
+	return nil
 }
 
 func GetColorMap(ColorSpace string) (ColorMap, error) {

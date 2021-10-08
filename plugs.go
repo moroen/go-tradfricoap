@@ -12,6 +12,7 @@ type TradfriPlug struct {
 	Name             string
 	State            bool
 	StateDescription string
+	Manufacturer     string
 	Model            string
 }
 
@@ -50,6 +51,11 @@ func ParsePlugInfo(aDevice []byte) (TradfriPlug, error) {
 	if value, err := jsonparser.GetString(aDevice, attrDeviceInfo, attrDeviceInfo_Model); err == nil {
 		p.Model = value
 	}
+
+	if value, err := jsonparser.GetString(aDevice, attrDeviceInfo, attrDeviceInfo_Manufacturer); err == nil {
+		p.Manufacturer = value
+	}
+
 	return p, err
 }
 

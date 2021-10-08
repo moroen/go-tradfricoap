@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/buger/jsonparser"
+	log "github.com/sirupsen/logrus"
 )
 
 type TradfriLight struct {
@@ -14,6 +15,7 @@ type TradfriLight struct {
 	StateDescription string
 	State            bool
 	Dimmer           int64
+	Manufacturer     string
 	Model            string
 	ColorSpace       string
 	Hex              string
@@ -73,15 +75,30 @@ func ParseLightInfo(aDevice []byte) (TradfriLight, error) {
 			aLight.ColorSpace = "CWS"
 		} else if strings.Contains(value, " WS ") {
 			aLight.ColorSpace = "WS"
+		} else if strings.Contains(value, " WW ") {
+			aLight.ColorSpace = "WW"
 		} else {
 			aLight.ColorSpace = ""
 		}
+	}
+
+	if value, err := jsonparser.GetString(aDevice, attrDeviceInfo, attrDeviceInfo_Model); err == nil {
+		aLight.Model = value
+	}
+
+	if value, err := jsonparser.GetString(aDevice, attrDeviceInfo, attrDeviceInfo_Manufacturer); err == nil {
+		aLight.Manufacturer = value
 	}
 
 	return aLight, err
 }
 
 func GetLight(id int64) (TradfriLight, error) {
+
+	log.WithFields(log.Fields{
+		"DeviceID": id,
+	}).Debug("Coap: GetLight")
+
 	var aLight TradfriLight
 
 	device, err := GetRequest(fmt.Sprintf("%s/%d", uriDevices, id))
@@ -152,7 +169,7 @@ func SetHex(id int64, hex string) (err error) {
 	return err
 }
 
-func SetHexForLevel(id int64, level int) (err error) {
+func SetHexForLevel(id int64, level int64) (err error) {
 	var colorMap ColorMap
 
 	if device, err := GetLight(id); err == nil {
@@ -162,7 +179,12 @@ func SetHexForLevel(id int64, level int) (err error) {
 			colorMap = CWmap()
 		}
 
-		if hex, keyExists := colorMap[level]["Hex"]; keyExists {
+		if hex, keyExists := colorMap[int(level)]["Hex"]; keyExists {
+			log.WithFields(log.Fields{
+				"Function": "SetHexForLevel",
+				"deviceid": id,
+				"hex":      hex,
+			}).Debug()
 			return SetHex(id, hex)
 		} else {
 			return fmt.Errorf("Unknown colorlevel %d", level)

@@ -36,6 +36,10 @@ func ValidateOnOff(arg string) error {
 }
 
 func GetDevice(id int64) ([]byte, error) {
+	log.WithFields(log.Fields{
+		"DeviceID": id,
+	}).Debug("Coap: GetDevice")
+
 	msg, err := GetRequest(fmt.Sprintf("%s/%d", uriDevices, id))
 	if err != nil {
 		return nil, err
@@ -45,6 +49,7 @@ func GetDevice(id int64) ([]byte, error) {
 }
 
 func GetDevices() (lights TradfriLights, plugs TradfriPlugs, blinds TradfriBlinds, groups TradfriGroups, err error) {
+	log.Debug("Coap: GetDevices()")
 	result, err := GetRequest(uriDevices)
 	if err != nil {
 		// fmt.Println(err.Error())

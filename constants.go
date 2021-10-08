@@ -13,6 +13,7 @@ const attrId = "9003"
 
 const attrDeviceInfo = "3"
 const attrDeviceInfo_Model = "1"
+const attrDeviceInfo_Manufacturer = "0"
 
 const uriGroups = "/15004"
 
