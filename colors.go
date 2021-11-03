@@ -50,6 +50,15 @@ func CWSmap() ColorMap {
 	return cws
 }
 
+type ColorDefinition struct {
+	X int64
+	Y int64
+}
+
+func (c *ColorDefinition) ToFloat() (float64, float64) {
+	return float64(c.X) / 65535, float64(c.Y) / 65535
+}
+
 func hexForLevel(colorMap ColorMap, level int) string {
 	return colorMap[level]["Hex"]
 }
@@ -63,13 +72,13 @@ func ListColorsInMap(colorMap ColorMap) {
 	sort.Ints(keys)
 
 	for _, val := range keys {
-		fmt.Println(fmt.Sprintf("%d: %s", val, colorMap[val]["Name"]))
+		fmt.Printf("%d: %s\n", val, colorMap[val]["Name"])
 	}
 }
 
 func SetXY(id int64, x int64, y int64) error {
 	uri := fmt.Sprintf("%s/%d", uriDevices, 65554)
-	payload := fmt.Sprintf("{ \"3311\": [{\"5709\": %d, \"5710\": %d}] }", x, y)
+	payload := fmt.Sprintf("{ \"3311\": [{\"%s\": %d, \"%s\": %d}] }", attrColorX, x, attrColorY, y)
 
 	log.WithFields(log.Fields{
 		uri:     uri,

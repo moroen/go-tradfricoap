@@ -18,6 +18,7 @@ type TradfriLight struct {
 	Manufacturer     string
 	Model            string
 	ColorSpace       string
+	ColorValues      ColorDefinition
 	Hex              string
 }
 
@@ -62,6 +63,18 @@ func ParseLightInfo(aDevice []byte) (TradfriLight, error) {
 
 		if res, err := jsonparser.GetString(value, attrLightHex); err == nil {
 			aLight.Hex = res
+		}
+
+		if res, err := jsonparser.GetInt(value, attrColorX); err == nil {
+			aLight.ColorValues.X = res
+		} else {
+			aLight.ColorValues.X = -1
+		}
+
+		if res, err := jsonparser.GetInt(value, attrColorY); err == nil {
+			aLight.ColorValues.Y = res
+		} else {
+			aLight.ColorValues.Y = -1
 		}
 
 	}, attrLightControl)

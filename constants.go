@@ -23,6 +23,8 @@ const attrLightState = "5850"
 const attrLightDimmer = "5851"
 const attrLightHex = "5706"
 const attrTransitionTime = "5712"
+const attrColorX = "5709"
+const attrColorY = "5710"
 
 // Blinds
 const attrBlindControl = "15015"

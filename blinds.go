@@ -11,10 +11,11 @@ import (
 )
 
 type TradfriBlind struct {
-	Id    int64
-	Name  string
-	Level float64
-	Model string
+	Id           int64
+	Name         string
+	Level        float64
+	Model        string
+	Manufacturer string
 }
 
 type TradfriBlinds []TradfriBlind
@@ -46,6 +47,11 @@ func ParseBlindInfo(aDevice []byte) (TradfriBlind, error) {
 	if value, err := jsonparser.GetString(aDevice, attrDeviceInfo, attrDeviceInfo_Model); err == nil {
 		p.Model = value
 	}
+
+	if value, err := jsonparser.GetString(aDevice, attrDeviceInfo, attrDeviceInfo_Manufacturer); err == nil {
+		p.Manufacturer = value
+	}
+
 	return p, err
 }
 

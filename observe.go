@@ -15,9 +15,9 @@ var _wg *sync.WaitGroup
 
 func ObserveStop() {
 	defer _wg.Done()
-	log.Info("Stopping tradfri...")
+	log.Info("Tradfri: Stopping...")
 	coap.ObserveStop()
-	log.Info("Tradfri stopped")
+	log.Info("Tradfri: Stopped")
 
 }
 
@@ -25,7 +25,7 @@ func ObserveRestart(reconnect bool) {
 	coap.ObserveRestart(reconnect)
 }
 
-func Observe(wg *sync.WaitGroup, callback func([]byte) error) (chan (error), error) {
+func Observe(wg *sync.WaitGroup, callback func([]byte) error, keepAlive int) (chan (error), error) {
 	var endPoints []string
 	_wg = wg
 	_wg.Add(1)
@@ -57,7 +57,14 @@ func Observe(wg *sync.WaitGroup, callback func([]byte) error) (chan (error), err
 		return nil, err
 	}
 
-	param := coap.ObserveParams{Host: conf.Gateway, Port: 5684, Id: conf.Identity, Key: conf.Passkey}
+	param := coap.ObserveParams{
+		Host:      conf.Gateway,
+		Port:      5684,
+		Uri:       []string{},
+		Id:        conf.Identity,
+		Key:       conf.Passkey,
+		KeepAlive: keepAlive,
+	}
 
 	param.Uri = endPoints
 	go coap.Observe(param, callback)

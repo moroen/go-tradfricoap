@@ -17,9 +17,10 @@ import (
 var globalGatewayConfig GatewayConfig
 
 type GatewayConfig struct {
-	Gateway  string
-	Identity string
-	Passkey  string
+	Gateway   string
+	Identity  string
+	Passkey   string
+	KeepAlive int
 }
 
 var configDirs = configdir.New("", "tradfri")
@@ -179,6 +180,12 @@ func SetCoapRetry(limit uint, delay int) {
 	coap.SetRetry(limit, delay)
 }
 
-func CloseDTLSConnection() error {
+func ConnectGateway(cfg GatewayConfig) error {
+	SetConfig(cfg)
+	_, err := GetRequest("15001/")
+	return err
+}
+
+func CloseConnection() error {
 	return coap.CloseDTLSConnection()
 }
