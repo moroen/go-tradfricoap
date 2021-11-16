@@ -1,6 +1,7 @@
 package tradfricoap
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -134,6 +135,25 @@ func GetNewPSK(gateway, key string) (DTLSPSKpair, error) {
 	}
 
 	return DTLSPSKpair{Ident: ident, Key: psk}, nil
+}
+
+func GetRequestWithContext(ctx context.Context, URI string) (retmsg []byte, err error) {
+	conf, err := GetConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	param := coap.RequestParams{Host: conf.Gateway, Port: 5684, Uri: URI, Id: conf.Identity, Key: conf.Passkey}
+
+	res, err := coap.GetRequestWithContext(ctx, param, 10)
+	if err != nil {
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err.Error(),
+			}).Error("GetRequest failed")
+		}
+	}
+	return res, err
 }
 
 func GetRequest(URI string) (retmsg []byte, err error) {

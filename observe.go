@@ -1,8 +1,8 @@
 package tradfricoap
 
 import (
+	"context"
 	"fmt"
-	"sync"
 
 	"github.com/buger/jsonparser"
 	coap "github.com/moroen/gocoap/v4"
@@ -11,30 +11,23 @@ import (
 
 var _control_channel chan (error)
 
-var _wg *sync.WaitGroup
+var ctxObserve context.Context
 
 func ObserveStop() {
-	defer _wg.Done()
-	log.Info("Tradfri: Stopping...")
 	coap.ObserveStop()
-	log.Info("Tradfri: Stopped")
-
 }
 
 func ObserveRestart(reconnect bool) {
 	coap.ObserveRestart(reconnect)
 }
 
-func Observe(wg *sync.WaitGroup, callback func([]byte) error, keepAlive int) (chan (error), error) {
+func Observe(callback func([]byte) error, keepAlive int) (chan (error), error) {
 	var endPoints []string
-	_wg = wg
-	_wg.Add(1)
 
 	_control_channel = make(chan error)
 
 	conf, err := GetConfig()
 	if err != nil {
-		fmt.Println("Shite")
 		return _control_channel, err
 	}
 
@@ -43,7 +36,10 @@ func Observe(wg *sync.WaitGroup, callback func([]byte) error, keepAlive int) (ch
 		"Key": conf.Passkey,
 	}).Debug("COAP observe")
 
-	if result, err := GetRequest(uriDevices); err == nil {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if result, err := GetRequestWithContext(ctx, uriDevices); err == nil {
 		msg := result
 
 		if _, err = jsonparser.ArrayEach(msg, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
@@ -54,6 +50,7 @@ func Observe(wg *sync.WaitGroup, callback func([]byte) error, keepAlive int) (ch
 			return nil, err
 		}
 	} else {
+		fmt.Println("Fails here")
 		return nil, err
 	}
 

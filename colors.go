@@ -128,7 +128,7 @@ func GetColorMap(ColorSpace string) (ColorMap, error) {
 	case "WS":
 		return CWmap(), nil
 	default:
-		return nil, errors.New("Unknown colorspace")
+		return nil, errors.New("unknown colorspace")
 	}
 }
 
