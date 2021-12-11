@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/buger/jsonparser"
-	coap "github.com/moroen/gocoap/v4"
+	coap "github.com/moroen/gocoap/v5"
 	log "github.com/sirupsen/logrus"
 )
 

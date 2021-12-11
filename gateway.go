@@ -11,7 +11,7 @@ import (
 	"github.com/buger/jsonparser"
 	"github.com/shibukawa/configdir"
 
-	coap "github.com/moroen/gocoap/v4"
+	coap "github.com/moroen/gocoap/v5"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -24,6 +24,7 @@ type GatewayConfig struct {
 	KeepAlive int
 }
 
+var coapDTLSConnection coap.CoapDTLSConnection
 var configDirs = configdir.New("", "tradfri")
 
 // ErrorNoConfig error
@@ -178,32 +179,49 @@ func GetRequest(URI string) (retmsg []byte, err error) {
 }
 
 func PutRequest(URI string, Payload string) (retmsg []byte, err error) {
-	var res []byte
+	/*
+		var res []byte
 
-	conf, err := GetConfig()
-	if err != nil {
-		panic(err.Error())
-	}
+		conf, err := GetConfig()
+		if err != nil {
+			panic(err.Error())
+		}
 
-	param := coap.RequestParams{Host: conf.Gateway, Port: 5684, Uri: URI, Id: conf.Identity, Key: conf.Passkey, Payload: Payload}
+		param := coap.RequestParams{Host: conf.Gateway, Port: 5684, Uri: URI, Id: conf.Identity, Key: conf.Passkey, Payload: Payload}
 
-	res, err = coap.PutRequest(param)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err.Error(),
-		}).Error("PutRequest failed")
-	}
-	return res, err
+		res, err = coap.PutRequest(param)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err.Error(),
+			}).Error("PutRequest failed")
+		}
+		return res, err
+	*/
+	log.Error("PutRequest - disabled")
+	return nil, nil
 }
 
 func SetCoapRetry(limit uint, delay int) {
 	coap.SetRetry(limit, delay)
 }
 
-func ConnectGateway(cfg GatewayConfig) error {
-	SetConfig(cfg)
-	_, err := GetRequest("15001/")
-	return err
+func ConnectGateway(ctx context.Context, cfg GatewayConfig, onConnect func(), onDisconnect func(), onCanceled func(), onConnectionFailed func()) error {
+	// SetConfig(cfg)
+
+	coapDTLSConnection = coap.CoapDTLSConnection{}
+
+	coapDTLSConnection.Host = cfg.Gateway
+	coapDTLSConnection.Port = 5684
+	coapDTLSConnection.Ident = cfg.Identity
+	coapDTLSConnection.Key = cfg.Passkey
+
+	coapDTLSConnection.OnConnect = onConnect
+	coapDTLSConnection.OnDisconnect = onDisconnect
+	coapDTLSConnection.OnCanceled = onCanceled
+	coapDTLSConnection.OnConnectionFailed = onConnectionFailed
+
+	coapDTLSConnection.Connect(ctx)
+	return nil
 }
 
 func CloseConnection() error {
